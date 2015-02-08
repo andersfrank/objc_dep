@@ -18,3 +18,6 @@ dot -Tpdf Sections/Show.dot > Sections/Show.pdf
 
 python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Player > Sections/Player.dot
 dot -Tpdf Sections/Player.dot > Sections/Player.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay > Sections/Dplay.dot
+dot -Tpdf Sections/Dplay.dot > Sections/Dplay.pdf

@@ -84,7 +84,7 @@ def dependencies_in_project_with_file_extensions(path, exts, exclude, ignore, sy
 
     return d
 
-def two_ways_dependencies(d):
+def bidirectional_files(d):
 
     two_ways = Set()
 
@@ -100,7 +100,7 @@ def two_ways_dependencies(d):
                     
     return two_ways
 
-def untraversed_files(d):
+def leaf_files(d):
 
     dead_ends = Set()
 
@@ -110,6 +110,20 @@ def untraversed_files(d):
                 dead_ends.add(file_b)
 
     return dead_ends
+
+def files_containing_type(d,type_name):
+
+    viewModels = Set()
+
+    for file_a, file_a_dependencies in d.iteritems():
+        add_class_with_name_to_set(viewModels,file_a,type_name)
+        for file_b in file_a_dependencies:
+            add_class_with_name_to_set(viewModels,file_b,type_name)
+    return viewModels
+
+def add_class_with_name_to_set(the_set,class_name,type_name):
+    if not class_name in the_set and type_name in class_name:
+        the_set.add(class_name)
 
 def category_files(d):
     d2 = {}
@@ -153,31 +167,58 @@ def print_frequencies_chart(d):
         s = "%2d | %s\n" % (i, ", ".join(sorted(list(l[i]))))
         sys.stderr.write(s)
 
-def dependencies_in_dot_format(path, exclude, ignore, system, extensions):
+def append_ignore(ignore,l):
+    if ignore:
+        l.append("\t")
+        l.append("\tnode [shape=box, color=blue];")
+        l.append("\t\"Ignored\" [label=\"%s\"];" % "\\n".join(ignore))
+
+def append_category_list(category_list,l):
+    if category_list:
+        l.append("\t")
+        l.append("\tedge [color=black];")
+        l.append("\tnode [shape=plaintext];")
+        l.append("\t\"Categories\" [label=\"%s\"];" % "\\n".join(category_list))
+ 
+def append_leafs(leafs,l):
+    l.append("\t")
+    for k in leafs:
+        shape = "box"
+        # sys.stderr.write()
+        if "ViewModel" in k:
+            shape = "oval"
+        l.append("\t\"%s\" [color=gray, style=dashed, fontcolor=gray shape=%s]" % (k,shape))
+
+def append_style(view_models,l,color,shape,):
+    l.append("\t")
+    for k in view_models:
+            l.append("\t\"%s\" [shape=%s fillcolor=%s style=filled]" % (k,shape,color))
+
+def append_ananymous_style(classes,l):
+    l.append("\t")
+    for k in classes:
+            l.append("\t\"%s\" [shape=box fillcolor=gray style=dashed]" % k)
+
+def append_biderectional_classes(bidirectional_classes,l):
+    l.append("\t")
+    l.append("\tedge [color=black, dir=both];")
+
+    for (k, k2) in bidirectional_classes:
+        l.append("\t\"%s\" -> \"%s\";" % (k, k2))
+
+
+def append_pch(pch_set,l):
+    l.append("\t")
     
-    d = dependencies_in_project_with_file_extensions(path, ['.h', '.hh', '.hpp', '.m', '.mm', '.c', '.cc', '.cpp'], exclude, ignore, system, extensions)
+    for (k, v) in pch_set.iteritems():
+        l.append("\t\"%s\" [color=red];" % k)
+        for x in v:
+            l.append("\t\"%s\" -> \"%s\" [color=red];" % (k, x))
 
-    two_ways_set = two_ways_dependencies(d)
-    untraversed_set = untraversed_files(d)
-
-    category_list, d = category_files(d)
-
-    pch_set = dependencies_in_project(path, '.pch', exclude, ignore, system, extensions)
-
-    #
+def append_unidirectional_classes(d,bidirectional_set,l):
     
-    sys.stderr.write("# number of imports\n\n")
-    print_frequencies_chart(d)
-    
-    sys.stderr.write("\n# times the class is imported\n\n")
-    d2 = referenced_classes_from_dict(d)    
-    print_frequencies_chart(d2)
-        
-    #
-
-    l = []
-    l.append("digraph G {")
     l.append("\tnode [shape=box];")
+    l.append("\tedge [color=gray60];")
 
     for k, deps in d.iteritems():
         if deps:
@@ -187,36 +228,28 @@ def dependencies_in_dot_format(path, exclude, ignore, system, extensions):
             l.append("\t\"%s\" -> {};" % (k))
         
         for k2 in deps:
-            if not ((k, k2) in two_ways_set or (k2, k) in two_ways_set):
+            if not ((k, k2) in bidirectional_set or (k2, k) in bidirectional_set):
                 l.append("\t\"%s\" -> \"%s\";" % (k, k2))
 
-    l.append("\t")
-    for (k, v) in pch_set.iteritems():
-        l.append("\t\"%s\" [color=red];" % k)
-        for x in v:
-            l.append("\t\"%s\" -> \"%s\" [color=red];" % (k, x))
+def dependencies_in_dot_format(path, exclude, ignore, system, extensions):
     
-    l.append("\t")
-    l.append("\tedge [color=blue, dir=both];")
+    d = dependencies_in_project_with_file_extensions(path, ['.h', '.hh', '.hpp', '.m', '.mm', '.c', '.cc', '.cpp'], exclude, ignore, system, extensions)
+    bidirectional_files_set = bidirectional_files(d)
+    leafs = leaf_files(d)
+    category_list, d = category_files(d)
+    pch_set = dependencies_in_project(path, '.pch', exclude, ignore, system, extensions)
 
-    for (k, k2) in two_ways_set:
-        l.append("\t\"%s\" -> \"%s\";" % (k, k2))
-
-    for k in untraversed_set:
-        l.append("\t\"%s\" [color=gray, style=dashed, fontcolor=gray]" % k)
-    
-    if category_list:
-        l.append("\t")
-        l.append("\tedge [color=black];")
-        l.append("\tnode [shape=plaintext];")
-        l.append("\t\"Categories\" [label=\"%s\"];" % "\\n".join(category_list))
-
-    if ignore:
-        l.append("\t")
-        l.append("\tnode [shape=box, color=blue];")
-        l.append("\t\"Ignored\" [label=\"%s\"];" % "\\n".join(ignore))
-
+    l = []
+    l.append("digraph G {")
+    append_unidirectional_classes(d,bidirectional_files_set,l)
+    append_pch(pch_set,l)
+    append_biderectional_classes(bidirectional_files_set,l)
+    append_style(files_containing_type(d,"ViewController"),l,"powderblue","box")
+    append_style(files_containing_type(d,"ViewModel"),l,"lightgray","oval")
+    append_category_list(category_list,l)
+    append_ignore(ignore,l)
     l.append("}\n")
+
     return '\n'.join(l)
 
 def main():
