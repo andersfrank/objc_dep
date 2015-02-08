@@ -1,0 +1,20 @@
+
+mkdir Sections
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Home > Sections/Home.dot
+dot -Tpdf Sections/Home.dot > Sections/Home.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Search > Sections/Search.dot
+dot -Tpdf Sections/Search.dot > Sections/Search.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Shows > Sections/Shows.dot
+dot -Tpdf Sections/Shows.dot > Sections/Shows.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Show > Sections/Show.dot
+dot -Tpdf Sections/Show.dot > Sections/Show.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Show > Sections/Show.dot
+dot -Tpdf Sections/Show.dot > Sections/Show.pdf
+
+python objc_dep.py ../dplay-ios/Project/Dplay/Classes/Sections/Player > Sections/Player.dot
+dot -Tpdf Sections/Player.dot > Sections/Player.pdf
