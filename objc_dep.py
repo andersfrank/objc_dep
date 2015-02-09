@@ -189,10 +189,10 @@ def append_leafs(leafs,l):
             shape = "oval"
         l.append("\t\"%s\" [color=gray, style=dashed, fontcolor=gray shape=%s]" % (k,shape))
 
-def append_style(view_models,l,color,shape,):
+def append_style(view_models,l,color,shape,fontcolor):
     l.append("\t")
     for k in view_models:
-            l.append("\t\"%s\" [shape=%s fillcolor=%s style=filled]" % (k,shape,color))
+            l.append("\t\"%s\" [shape=%s fillcolor=%s style=filled fontcolor=%s]" % (k,shape,color,fontcolor))
 
 def append_ananymous_style(classes,l):
     l.append("\t")
@@ -217,7 +217,7 @@ def append_pch(pch_set,l):
 
 def append_unidirectional_classes(d,bidirectional_set,l):
     
-    l.append("\tnode [shape=box];")
+    l.append("\tnode [shape=box style=rounded];")
     l.append("\tedge [color=gray60];")
 
     for k, deps in d.iteritems():
@@ -244,8 +244,8 @@ def dependencies_in_dot_format(path, exclude, ignore, system, extensions):
     append_unidirectional_classes(d,bidirectional_files_set,l)
     append_pch(pch_set,l)
     append_biderectional_classes(bidirectional_files_set,l)
-    append_style(files_containing_type(d,"ViewController"),l,"powderblue","box")
-    append_style(files_containing_type(d,"ViewModel"),l,"lightgray","oval")
+    append_style(files_containing_type(d,"ViewController"),l,"gray10","box","white")
+    append_style(files_containing_type(d,"ViewModel"),l,"gray85","oval","black")
     append_category_list(category_list,l)
     append_ignore(ignore,l)
     l.append("}\n")
